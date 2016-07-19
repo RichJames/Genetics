@@ -1,5 +1,6 @@
 #import struct
 from ctypes import *
+from decimal import *
 from randev import RanDev
 
 devgen = RanDev()
@@ -166,22 +167,32 @@ def doubleCrossover(d1, d2):
 	dcross = cast(pointer(c_int64(lcross)), POINTER(c_double)).contents.value
 	return dcross
 
-fmutagen = FloatMutagen()
-fmutagen.State()
+def SigDig(x, n):
+	# round a number, x, to a specific number of digits, using n as a template
+	return Decimal(x).quantize(Decimal(n))
 
-for i in range(10):
-	f1 = devgen.GetUDev()
-	mutate1 = fmutagen.floatMutate(f1)
+a = Decimal(3.14)
+print('raw a = {0}'.format(a))
+print('a = {0}'.format(SigDig(a, '.00')))
+print('raw b = {0}'.format(Decimal(3.14)))
 
-	print("({0}) f1 = {1}, mutate = {2}".format(i, f1, mutate1))
 
-	f2 = devgen.GetUDev()
-	mutate2 = fmutagen.floatMutate(f1)
+#fmutagen = FloatMutagen()
+#fmutagen.State()
 
-	print("({0}) f2 = {1}, mutate = {2}".format(i, f2, mutate2))
+#for i in range(10):
+#	f1 = devgen.GetUDev()
+#	mutate1 = fmutagen.floatMutate(f1)
 
-	offspring = floatCrossover(mutate1, mutate2)
+#	print("({0}) f1 = {1}, mutate = {2}".format(i, f1, mutate1))
 
-	print("({0}) offspring = {1}".format(i, offspring))
-	print("")
+#	f2 = devgen.GetUDev()
+#	mutate2 = fmutagen.floatMutate(f1)
+
+#	print("({0}) f2 = {1}, mutate = {2}".format(i, f2, mutate2))
+
+#	offspring = floatCrossover(mutate1, mutate2)
+
+#	print("({0}) offspring = {1}".format(i, offspring))
+#	print("")
 
