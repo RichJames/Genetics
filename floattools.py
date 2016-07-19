@@ -3,12 +3,12 @@ from ctypes import *
 from decimal import *
 from randev import RanDev
 
-devgen = RanDev()
-
 #def binary(num):
 #	return ''.join(bin(c).replace('0b', '').rjust(8, '0') for c in struct.pack('!f', num))
 
 class FloatMutagen:
+	_devgen = RanDev()
+
 	def __init__(self, sweight = 5.0, eweight = 5.0, mweight = 90.0):
 		self._TotalW = sweight + eweight + mweight
 		self._SignW = sweight
@@ -25,7 +25,7 @@ class FloatMutagen:
 		FExpt = 0b01111111100000000000000000000000
 	
 		#choose section to mutate
-		mpick = devgen.GetUDev() * self._TotalW
+		mpick = self._devgen.GetUDev() * self._TotalW
 		
 		#copy double to long for manipulation
 		x = cast(pointer(c_float(mpick)), POINTER(c_int32)).contents.value & 0xffffffff
@@ -50,7 +50,7 @@ class FloatMutagen:
 				# mutate exponent while number is valid
 				while 1==1:
 					n = x
-					mask = (0x00800000 << int(devgen.GetUDev() * 8.0)) & 0xffffffff
+					mask = (0x00800000 << int(self._devgen.GetUDev() * 8.0)) & 0xffffffff
 
 					if n & mask:
 						n &= ~mask
@@ -63,7 +63,7 @@ class FloatMutagen:
 				x = n
 			else:
 				# flip bit in mantissa
-				mask = (1 << int(devgen.GetUDev() * 23.0)) & 0xffffffff
+				mask = (1 << int(self._devgen.GetUDev() * 23.0)) & 0xffffffff
 
 				if x & mask:
 					x &= ~mask
@@ -78,7 +78,7 @@ class FloatMutagen:
 		DExpt = 0b0111111111110000000000000000000000000000000000000000000000000000
 	
 		#choose section to mutate
-		mpick = devgen.GetUDev() * self._TotalW
+		mpick = self._devgen.GetUDev() * self._TotalW
 		
 		#copy float to long for manipulation
 		x = cast(pointer(c_double(mpick)), POINTER(c_int64)).contents.value & 0xffffffffffffffff
@@ -103,7 +103,7 @@ class FloatMutagen:
 				# mutate exponent while number is valid
 				while 1==1:
 					n = x
-					mask = (0x0010000000000000 << int(devgen.GetUDev() * 11.0)) & 0xffffffffffffffff
+					mask = (0x0010000000000000 << int(self._devgen.GetUDev() * 11.0)) & 0xffffffffffffffff
 
 					if n & mask:
 						n &= ~mask
@@ -116,7 +116,7 @@ class FloatMutagen:
 				x = n
 			else:
 				# flip bit in mantissa
-				mask = (1 << int(devgen.GetUDev() * 52.0)) & 0xffffffffffffffff
+				mask = (1 << int(self._devgen.GetUDev() * 52.0)) & 0xffffffffffffffff
 
 				if x & mask:
 					x &= ~mask
@@ -130,6 +130,9 @@ def floatCrossover(f1, f2):
 	#mask for exponent bits
 	#FExpt = 0x7F800000
 	FExpt = 0b01111111100000000000000000000000
+
+	# create random deviate generator
+	devgen = RanDev()
 
 	l1 = cast(pointer(c_float(f1)), POINTER(c_int32)).contents.value & 0xffffffff
 	l2 = cast(pointer(c_float(f2)), POINTER(c_int32)).contents.value & 0xffffffff
@@ -151,6 +154,9 @@ def doubleCrossover(d1, d2):
 	#mask for exponent bits
 	DExpt = 0b0111111111110000000000000000000000000000000000000000000000000000
 
+	# create random deviate generator
+	devgen = RanDev()
+
 	l1 = cast(pointer(c_double(d1)), POINTER(c_int64)).contents.value & 0xffffffffffffffff
 	l2 = cast(pointer(c_double(d2)), POINTER(c_int64)).contents.value & 0xffffffffffffffff
 
@@ -171,10 +177,10 @@ def SigDig(x, n):
 	# round a number, x, to a specific number of digits, using n as a template
 	return Decimal(x).quantize(Decimal(n))
 
-a = Decimal(3.14)
-print('raw a = {0}'.format(a))
-print('a = {0}'.format(SigDig(a, '.00')))
-print('raw b = {0}'.format(Decimal(3.14)))
+#a = Decimal(3.14)
+#print('raw a = {0}'.format(a))
+#print('a = {0}'.format(SigDig(a, '.00')))
+#print('raw b = {0}'.format(Decimal(3.14)))
 
 
 #fmutagen = FloatMutagen()
