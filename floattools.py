@@ -28,7 +28,7 @@ class FloatMutagen:
 		mpick = self._devgen.GetUDev() * self._TotalW
 		
 		#copy double to long for manipulation
-		x = cast(pointer(c_float(mpick)), POINTER(c_int32)).contents.value & 0xffffffff
+		x = cast(pointer(c_float(d)), POINTER(c_int32)).contents.value & 0xffffffff
 
 		#if all exponent bits on (invalid number), return original
 		if (x & FExpt) == FExpt:
@@ -81,7 +81,7 @@ class FloatMutagen:
 		mpick = self._devgen.GetUDev() * self._TotalW
 		
 		#copy float to long for manipulation
-		x = cast(pointer(c_double(mpick)), POINTER(c_int64)).contents.value & 0xffffffffffffffff
+		x = cast(pointer(c_double(d)), POINTER(c_int64)).contents.value & 0xffffffffffffffff
 
 		#if all exponent bits on (invalid number), return original
 		if (x & DExpt) == DExpt:
@@ -116,14 +116,21 @@ class FloatMutagen:
 				x = n
 			else:
 				# flip bit in mantissa
+				#print('doubleMutate: flipping mantissa...')
 				mask = (1 << int(self._devgen.GetUDev() * 52.0)) & 0xffffffffffffffff
+				#print('doubleMutate: mask = {0}'.format(bin(mask)))
+				#print('doubleMutate: x before masking = {0}'.format(bin(x)))
 
 				if x & mask:
 					x &= ~mask
 				else:
 					x |= mask
 
+				#print('doubleMutate: x after masking  = {0}'.format(bin(x)))
+				#print('doubleMutate: x as an int      = {0}'.format(x))
+
 		res = cast(pointer(c_int64(x)), POINTER(c_double)).contents.value
+		#print('doubleMutate: res              = {0}'.format(res))
 		return res
 
 def floatCrossover(f1, f2):
@@ -175,7 +182,7 @@ def doubleCrossover(d1, d2):
 
 def SigDig(x, n):
 	# round a number, x, to a specific number of digits, using n as a template
-	return Decimal(x).quantize(Decimal(n))
+	return float(Decimal(x).quantize(Decimal(n)))
 
 #a = Decimal(3.14)
 #print('raw a = {0}'.format(a))
