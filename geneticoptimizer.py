@@ -35,7 +35,7 @@ EQ_ID			= 0
 FSA_EXPON		= 1
 FSA_WINDOW		= 2
 FSA_LINEAR		= 3
-Normalization		= 1
+Normalization		= 2
 
 # fitness algorithms
 def FitnessF6(x, y):
