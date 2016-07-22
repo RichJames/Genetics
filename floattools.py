@@ -73,37 +73,91 @@ class FloatMutagen:
 		res = cast(pointer(c_int32(x)), POINTER(c_float)).contents.value
 		return res
 
+	#def doubleMutate(self, d):
+		#mask for exponent bits
+		#DExpt = 0b0111111111110000000000000000000000000000000000000000000000000000
+	
+		#choose section to mutate
+		#mpick = self._devgen.GetUDev() * self._TotalW
+		
+		#copy float to long for manipulation
+		#x = cast(pointer(c_double(d)), POINTER(c_int64)).contents.value & 0xffffffffffffffff
+
+		#if all exponent bits on (invalid number), return original
+		#if (x & DExpt) == DExpt:
+		#	return d
+
+		#mutate
+		#if (mpick < self._SignW):
+			#flip sign
+		#	mask = 0x8000000000000000
+
+		#	if x & mask:
+		#		x &= ~mask
+		#	else:
+		#		x |= mask
+		#else:
+		#	mpick -= self._SignW
+
+		#	if mpick < self._ExpW:
+				# mutate exponent while number is valid
+		#		while 1==1:
+		#			n = x
+		#			mask = (0x0010000000000000 << int(self._devgen.GetUDev() * 11.0)) & 0xffffffffffffffff
+
+		#			if n & mask:
+		#				n &= ~mask
+		#			else:
+		#				n |= mask
+
+		#			if (n & DExpt) != DExpt:
+		#				break	
+
+		#		x = n
+		#	else:
+				# flip bit in mantissa
+		#		mask = (1 << int(self._devgen.GetUDev() * 52.0)) & 0xffffffffffffffff
+
+		#		if x & mask:
+		#			x &= ~mask
+		#		else:
+		#			x |= mask
+
+		#x &= 0xffffffffffffffff
+		#res = cast(pointer(c_int64(x)), POINTER(c_double)).contents.value
+		#return res
+
 	def doubleMutate(self, d):
 		#mask for exponent bits
-		DExpt = 0b0111111111110000000000000000000000000000000000000000000000000000
+		DExpt = 0x7ff00000
 	
 		#choose section to mutate
 		mpick = self._devgen.GetUDev() * self._TotalW
 		
 		#copy float to long for manipulation
-		x = cast(pointer(c_double(d)), POINTER(c_int64)).contents.value & 0xffffffffffffffff
+		temp = cast(pointer(c_double(d)), POINTER(c_int64)).contents.value & 0xffffffffffffffff
+		mask1 = 0b1111111111111111111111111111111100000000000000000000000000000000
+		mask2 = 0b0000000000000000000000000000000011111111111111111111111111111111
 
-		#if all exponent bits on (invalid number), return original
-		if (x & DExpt) == DExpt:
-			return d
-
+		x = [(temp & mask1) >> 32, temp & mask2]
+	
 		#mutate
 		if (mpick < self._SignW):
 			#flip sign
-			mask = 0x8000000000000000
+			mask = 0x80000000
 
-			if x & mask:
-				x &= ~mask
+			if x[1] & mask:
+				x[1] &= ~mask
 			else:
-				x |= mask
+				x[1] |= mask
 		else:
 			mpick -= self._SignW
 
 			if mpick < self._ExpW:
 				# mutate exponent while number is valid
 				while 1==1:
-					n = x
-					mask = (0x0010000000000000 << int(self._devgen.GetUDev() * 11.0)) & 0xffffffffffffffff
+					n = x[1]
+					mask = (0x00100000 << int(self._devgen.GetUDev() * 11.0)) & 0xffffffff
 
 					if n & mask:
 						n &= ~mask
@@ -113,24 +167,29 @@ class FloatMutagen:
 					if (n & DExpt) != DExpt:
 						break	
 
-				x = n
+				x[1] = n
 			else:
-				# flip bit in mantissa
-				#print('doubleMutate: flipping mantissa...')
-				mask = (1 << int(self._devgen.GetUDev() * 52.0)) & 0xffffffffffffffff
-				#print('doubleMutate: mask = {0}'.format(bin(mask)))
-				#print('doubleMutate: x before masking = {0}'.format(bin(x)))
+				bit = int(self._devgen.GetUDev() * 52.0)
 
-				if x & mask:
-					x &= ~mask
+				if bit > 31:
+					bit -= 32
+					mask = (1 << bit) & 0xffffffff
+
+					if x[1] & mask:
+						x[1] &= ~mask
+					else:
+						x[1] |= mask
 				else:
-					x |= mask
+					# flip bit in mantissa
+					mask = (1 << bit) & 0xffffffff
 
-				#print('doubleMutate: x after masking  = {0}'.format(bin(x)))
-				#print('doubleMutate: x as an int      = {0}'.format(x))
+					if x[0] & mask:
+						x[0] &= ~mask
+					else:
+						x[0] |= mask
 
-		res = cast(pointer(c_int64(x)), POINTER(c_double)).contents.value
-		#print('doubleMutate: res              = {0}'.format(res))
+		temp	= ((x[0] << 32) & 0xffffffff00000000) ^ x[1]
+		res	= cast(pointer(c_int64(temp)), POINTER(c_double)).contents.value
 		return res
 
 def floatCrossover(f1, f2):
@@ -157,55 +216,78 @@ def floatCrossover(f1, f2):
 	fcross = cast(pointer(c_int32(lcross)), POINTER(c_float)).contents.value
 	return fcross
 
+#def doubleCrossover(d1, d2):
+	#mask for exponent bits
+#	DExpt = 0b0111111111110000000000000000000000000000000000000000000000000000
+
+	# create random deviate generator
+#	devgen = RanDev()
+
+#	l1 = cast(pointer(c_double(d1)), POINTER(c_int64)).contents.value & 0xffffffffffffffff
+#	l2 = cast(pointer(c_double(d2)), POINTER(c_int64)).contents.value & 0xffffffffffffffff
+
+#	while 1==1:
+		#create mask
+#		mask = (0xffffffffffffffff << int(devgen.GetUDev() * 64.0)) & 0xffffffffffffffff
+
+		#generate offspring
+#		lcross = (l1 & mask) | (l2 & (~mask))
+
+#		if (lcross & DExpt) != DExpt:
+#			break	
+
+#	lcross &= 0xffffffffffffffff
+#	dcross = cast(pointer(c_int64(lcross)), POINTER(c_double)).contents.value
+#	return dcross
+
 def doubleCrossover(d1, d2):
 	#mask for exponent bits
-	DExpt = 0b0111111111110000000000000000000000000000000000000000000000000000
+	DExpt 	= 0x7ff00000
+	lcross	= [None, None]
 
 	# create random deviate generator
 	devgen = RanDev()
 
-	l1 = cast(pointer(c_double(d1)), POINTER(c_int64)).contents.value & 0xffffffffffffffff
-	l2 = cast(pointer(c_double(d2)), POINTER(c_int64)).contents.value & 0xffffffffffffffff
+	#copy float to long for manipulation
+	temp1 = cast(pointer(c_double(d1)), POINTER(c_int64)).contents.value & 0xffffffffffffffff
+	temp2 = cast(pointer(c_double(d2)), POINTER(c_int64)).contents.value & 0xffffffffffffffff
+		
+	mask1 = 0b1111111111111111111111111111111100000000000000000000000000000000
+	mask2 = 0b0000000000000000000000000000000011111111111111111111111111111111
+
+	l1 = [(temp1 & mask1) >> 32, temp1 & mask2]
+	l2 = [(temp2 & mask1) >> 32, temp2 & mask2]
 
 	while 1==1:
-		#create mask
-		mask = (0xffffffffffffffff << int(devgen.GetUDev() * 64.0)) & 0xffffffffffffffff
+		# calculate bit position for flip
+		bit = int(devgen.GetUDev() * 64.0)
 
-		#generate offspring
-		lcross = (l1 & mask) | (l2 & (~mask))
+		if bit > 31:			# if flip in high-order word
+			# create mask
+			mask = (0xffffffff << (bit - 32)) & 0xffffffff
 
-		if (lcross & DExpt) != DExpt:
+			# duplicate low-order word of first parent
+			lcross[0] = l1[0]
+
+			# crossover in high-order word
+			lcross[1] = (l1[1] & mask) | (l2[1] & (~mask))
+		else:
+			# create mask
+			mask = (0xffffffff << bit) & 0xffffffff
+
+			# crossover in low-order word
+			lcross[0] = (l1[0] & mask) | (l2[0] & (~mask))
+
+			# duplicate high-order word of first parent
+			lcross[1] = l1[1]
+
+		if (lcross[1] & DExpt) != DExpt:
 			break	
 
-	dcross = cast(pointer(c_int64(lcross)), POINTER(c_double)).contents.value
-	return dcross
+	temp	= ((lcross[0] << 32) & 0xffffffff00000000) ^ lcross[1]
+	res	= cast(pointer(c_int64(temp)), POINTER(c_double)).contents.value
+	return res
 
 def SigDig(x, n):
 	# round a number, x, to a specific number of digits, using n as a template
 	return float(Decimal(x).quantize(Decimal(n)))
-
-#a = Decimal(3.14)
-#print('raw a = {0}'.format(a))
-#print('a = {0}'.format(SigDig(a, '.00')))
-#print('raw b = {0}'.format(Decimal(3.14)))
-
-
-#fmutagen = FloatMutagen()
-#fmutagen.State()
-
-#for i in range(10):
-#	f1 = devgen.GetUDev()
-#	mutate1 = fmutagen.floatMutate(f1)
-
-#	print("({0}) f1 = {1}, mutate = {2}".format(i, f1, mutate1))
-
-#	f2 = devgen.GetUDev()
-#	mutate2 = fmutagen.floatMutate(f1)
-
-#	print("({0}) f2 = {1}, mutate = {2}".format(i, f2, mutate2))
-
-#	offspring = floatCrossover(mutate1, mutate2)
-
-#	print("({0}) offspring = {1}".format(i, offspring))
-#	print("")
-

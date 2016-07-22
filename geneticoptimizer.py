@@ -60,7 +60,8 @@ def FitnessF8(x, y):
 def FitnessCust(x, y):
 	return (1.0 / (0.8 + math.pow((x + 0.5), 2) 
 	           	   + 2.0 * math.pow((y - 0.5), 2)
-	           	   - 0.3 * math.cos(3.0 * math.pi * x)))	
+	           	   - 0.3 * math.cos(3.0 * math.pi * x)	
+	           	   - 0.4 * math.cos(4.0 * math.pi * y)))	
 
 #helper function for sorting
 def getKey(item):
@@ -69,8 +70,8 @@ def getKey(item):
 def TestPeakSearch():
 	# create random deviate and mutations objects
 	devgen = RanDev()
-	#fmute = FloatMutagen(WtSign, WtExp, WtMant)
-	fmute = FloatMutagen()
+	fmute = FloatMutagen(WtSign, WtExp, WtMant)
+	#fmute = FloatMutagen()
 
 	# allocate fitness and population array (fitness, x, y)
 	x	= [[0.0] * 3 for i in range(POP_SZ)]
@@ -148,9 +149,9 @@ def TestPeakSearch():
 		# if elitist, include best from orig. population
 		if Elitist:
 			if Normalization == FSA_LINEAR:
-				xnew[0] = x[0]
+				xnew[0] = copy.deepcopy(x[0])
 			else:
-				xnew[0] = x[ibest]
+				xnew[0] = copy.deepcopy(x[ibest])
 
 			# reset xnew[0] fitness to 0.0
 			xnew[0][0] = 0.0
@@ -161,52 +162,73 @@ def TestPeakSearch():
 
 		# create new population of x's
 		while i < POP_SZ:
+			bCrossX 	= False
+			bCrossB 	= False
+			bCrossY 	= False
+			bMutateXloop	= False
+			bMutateXnoloop	= False
+			bMutateYloop	= False
+			bMutateYnoloop	= False
+
 			# create a new x
 			p1 = roulette.GetIndex()
 
 			if CrossX and (devgen.GetUDev() <= CrossRate):
+				bCrossX = True
 				p2 = roulette.GetIndex()
 				xnew[i][1] = doubleCrossover(x[p1][1], x[p2][1])
 			else:
 				xnew[i][1] = x[p1][1]
+				#xnew[i][1] = SigDig(rangex * devgen.GetUDev() + XMin, SIG_DIG)
 
 			# create a new y
 			if CrossB:
+				bCrossB = True
 				p1 = roulette.GetIndex()
 
 			if CrossY and (devgen.GetUDev() <= CrossRate):
+				bCrossY = True
 				p2 = roulette.GetIndex()
 				xnew[i][2] = doubleCrossover(x[p1][2], x[p2][2])
 			else:
 				xnew[i][2] = x[p1][2]
+				#xnew[i][2] = SigDig(rangey * devgen.GetUDev() + YMin, SIG_DIG)
 
 			# mutate x
 			if MutateX:
 				if MuteLoop:
+					bMutateXloop =True
 					while devgen.GetUDev() < MuteRate:
 						xnew[i][1] = fmute.doubleMutate(xnew[i][1])
 				else:
+					bMutateXnoloop = True
 					if devgen.GetUDev() < MuteRate:
 						xnew[i][1] = fmute.doubleMutate(xnew[i][1])
 
 			# mutate y
 			if MutateY:
 				if MuteLoop:
+					bMutateYloop = True
 					while devgen.GetUDev() < MuteRate:
 						xnew[i][2] = fmute.doubleMutate(xnew[i][2])
 				else:
+					bMutateYnoloop = True
 					if devgen.GetUDev() < MuteRate:
 						xnew[i][2] = fmute.doubleMutate(xnew[i][2])
 			
 			# make sure x & y fit ranges
 			if xnew[i][1] > XMax:
+				#print('{0} > XMax, flags: CrossX={1}, MutateXloop={2}, MutateXnoloop={3} '.format(xnew[i][1], bCrossX, bMutateXloop, bMutateXnoloop))
 				xnew[i][1] = XMax
 			elif xnew[i][1] < XMin:
+				#print('{0} < XMin, flags: CrossX={1}, MutateXloop={2}, MutateXnoloop={3} '.format(xnew[i][1], bCrossX, bMutateXloop, bMutateXnoloop))
 				xnew[i][1] = XMin
 
 			if xnew[i][2] > YMax:
+				#print('{0} > YMax, flags: CrossY={1}, CrossB={2}, MutateYloop={3}, MutateYnoloop={4} '.format(xnew[i][2], bCrossY, bCrossB, bMutateYloop, bMutateYnoloop))
 				xnew[i][2] = YMax
 			elif xnew[i][2] < YMin:
+				#print('{0} < YMin, flags: CrossY={1}, CrossB={2}, MutateYloop={3}, MutateYnoloop={4} '.format(xnew[i][2], bCrossY, bCrossB, bMutateYloop, bMutateYnoloop))
 				xnew[i][2] = YMin
 
 			# truncate digits
