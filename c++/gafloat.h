@@ -25,6 +25,9 @@ class FloatMutagen
             const float & mweight = 90.0
             );
 
+	float MPick
+	    (
+	    );
         float Mutate
             (
             const float & f

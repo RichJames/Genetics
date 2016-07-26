@@ -8,9 +8,10 @@ from decimal import *
 
 # initialize variables with default values
 POP_SZ			=  20
-GEN_SZ			=  21
+GEN_SZ			=  6
 ReptFreq		=   1
-SIG_DIG			= '.00000000'
+#SIG_DIG			= '.00000000'
+SIG_DIG			=  8
 XMin			= -10.0
 XMax			=  10.0
 YMin			= -10.0
@@ -162,34 +163,27 @@ def TestPeakSearch():
 
 		# create new population of x's
 		while i < POP_SZ:
-			bCrossX 	= False
-			bCrossB 	= False
-			bCrossY 	= False
-			bMutateXloop	= False
-			bMutateXnoloop	= False
-			bMutateYloop	= False
-			bMutateYnoloop	= False
-
 			# create a new x
 			p1 = roulette.GetIndex()
 
 			if CrossX and (devgen.GetUDev() <= CrossRate):
-				bCrossX = True
 				p2 = roulette.GetIndex()
 				xnew[i][1] = doubleCrossover(x[p1][1], x[p2][1])
+				#if abs(xnew[i][1]) < 1.0e-300:
+					#print('CrossX:  xnew[{0}][1] = {1}, from parents {2} and {3}'.format(i, xnew[i][1], x[p1][1], x[p2][1]))
 			else:
 				xnew[i][1] = x[p1][1]
 				#xnew[i][1] = SigDig(rangex * devgen.GetUDev() + XMin, SIG_DIG)
 
 			# create a new y
 			if CrossB:
-				bCrossB = True
 				p1 = roulette.GetIndex()
 
 			if CrossY and (devgen.GetUDev() <= CrossRate):
-				bCrossY = True
 				p2 = roulette.GetIndex()
 				xnew[i][2] = doubleCrossover(x[p1][2], x[p2][2])
+				#if abs(xnew[i][2]) < 1.0e-300:
+					#print('CrossY:  xnew[{0}][2] = {1}, from parents {2} and {3}'.format(i, xnew[i][2], x[p1][2], x[p2][2]))
 			else:
 				xnew[i][2] = x[p1][2]
 				#xnew[i][2] = SigDig(rangey * devgen.GetUDev() + YMin, SIG_DIG)
@@ -197,43 +191,47 @@ def TestPeakSearch():
 			# mutate x
 			if MutateX:
 				if MuteLoop:
-					bMutateXloop =True
 					while devgen.GetUDev() < MuteRate:
 						xnew[i][1] = fmute.doubleMutate(xnew[i][1])
 				else:
-					bMutateXnoloop = True
 					if devgen.GetUDev() < MuteRate:
+						prevx = xnew[i][1]	
 						xnew[i][1] = fmute.doubleMutate(xnew[i][1])
+						#if abs(xnew[i][1]) < 1.0e-300:
+							#print('MutateX:  xnew[{0}][1] = {1}, from {2}'.format(i, xnew[i][1], prevx))
 
 			# mutate y
 			if MutateY:
 				if MuteLoop:
-					bMutateYloop = True
 					while devgen.GetUDev() < MuteRate:
 						xnew[i][2] = fmute.doubleMutate(xnew[i][2])
 				else:
-					bMutateYnoloop = True
 					if devgen.GetUDev() < MuteRate:
+						prevy = xnew[i][1]	
 						xnew[i][2] = fmute.doubleMutate(xnew[i][2])
+						#if abs(xnew[i][2]) < 1.0e-300:
+							#print('MutateY:  xnew[{0}][2] = {1}, from {2}'.format(i, xnew[i][2], prevy))
 			
 			# make sure x & y fit ranges
 			if xnew[i][1] > XMax:
-				#print('{0} > XMax, flags: CrossX={1}, MutateXloop={2}, MutateXnoloop={3} '.format(xnew[i][1], bCrossX, bMutateXloop, bMutateXnoloop))
 				xnew[i][1] = XMax
 			elif xnew[i][1] < XMin:
-				#print('{0} < XMin, flags: CrossX={1}, MutateXloop={2}, MutateXnoloop={3} '.format(xnew[i][1], bCrossX, bMutateXloop, bMutateXnoloop))
 				xnew[i][1] = XMin
 
 			if xnew[i][2] > YMax:
-				#print('{0} > YMax, flags: CrossY={1}, CrossB={2}, MutateYloop={3}, MutateYnoloop={4} '.format(xnew[i][2], bCrossY, bCrossB, bMutateYloop, bMutateYnoloop))
 				xnew[i][2] = YMax
 			elif xnew[i][2] < YMin:
-				#print('{0} < YMin, flags: CrossY={1}, CrossB={2}, MutateYloop={3}, MutateYnoloop={4} '.format(xnew[i][2], bCrossY, bCrossB, bMutateYloop, bMutateYnoloop))
 				xnew[i][2] = YMin
 
 			# truncate digits
+			prevxnew = xnew[i][1]
 			xnew[i][1] = SigDig(xnew[i][1], SIG_DIG)
+			#if abs(xnew[i][1] == 0.0):
+				#print('SigDig:  xnew[{0}][1] = {1}, from {2}'.format(i, xnew[i][1], prevxnew))
+			prevynew = xnew[i][2]
 			xnew[i][2] = SigDig(xnew[i][2], SIG_DIG)
+			#if abs(xnew[i][2] == 0.0):
+				#print('SigDig:  xnew[{0}][2] = {1}, from {2}'.format(i, xnew[i][2], prevynew))
 
 			# set xnew fitness to 0.0
 			xnew[i][0] = 0.0
@@ -243,9 +241,5 @@ def TestPeakSearch():
 
 		# copy new population
 		x = copy.deepcopy(xnew)
-
-		#print('xnew:')
-		#for i in range(POP_SZ):
-		#	print('({0}. {1}, {2})'.format(xnew[i][0], xnew[i][1], xnew[i][2]))
 
 TestPeakSearch()

@@ -11,10 +11,13 @@
 //  Copyright 1995 by Scott Robert Ladd. All rights reserved.
 //-----------------------------------------------------------
 
+#include <iostream>
 #include "gafloat.h"
 #include "float.h"
 #include "randdev.h"
 #include "string.h"
+
+using namespace std;
 
 static RandDev devgen;
 
@@ -29,6 +32,11 @@ FloatMutagen::FloatMutagen
       ExpW(eweight)
     {
     // intentionally blank
+    }
+
+float FloatMutagen::MPick()
+    {
+	return float(devgen() * TotalW);
     }
 
 float FloatMutagen::Mutate
@@ -109,6 +117,7 @@ double FloatMutagen::Mutate
     const double & d
     )
     {
+	cout << "in FloatMutagen::Mutate" << endl;
     // mask for exponent bits
     static const long DExpt = 0x7FF00000UL;
 
@@ -116,6 +125,8 @@ double FloatMutagen::Mutate
 
     // choose section to mutate
     double mpick = devgen() * TotalW;
+    // double mpick = 37.0747;
+	cout << "mpick = " << mpick << endl;
 
     // copy double to pair of longs for manipulation
     memcpy(x,&d,2 * sizeof(long));
@@ -140,6 +151,7 @@ double FloatMutagen::Mutate
             do  {
                 n = x[1];
                 mask = 0x00100000L << int(devgen() * 11.0F);
+                //mask = 0x00100000L << int(94.0542 * 11.0F);
 
                 if (n & mask)
                     n &= ~mask;
@@ -153,11 +165,14 @@ double FloatMutagen::Mutate
         else
             {
             bit = long(devgen() * 52.0F);
+		cout << "bit = " << bit << endl;
+            //bit = long(23.5392 * 52.0F);
 
             if (bit > 31L)
                 {
                 bit -= 32L;
                 mask = 1L << (int)bit;
+		cout << "mask = " << mask << ", x[1] = " << x[1] << endl;
 
                 if (x[1] & mask)
                     x[1] &= ~mask;
@@ -168,6 +183,7 @@ double FloatMutagen::Mutate
                 {
                 // flip bit in mantissa
                 mask = 1L << (int)bit;
+		cout << "mask = " << mask << ", x[0] = " << x[0] << endl;
 
                 if (x[0] & mask)
                     x[0] &= ~mask;
@@ -230,15 +246,20 @@ double Crossover
     // store values in longs
     memcpy(l1,&d1,sizeof(double));
     memcpy(l2,&d2,sizeof(double));
+	
+	cout << "l1[0] = " << l1[0] << ", l1[1] = " << l1[1] << endl;
+	cout << "l2[0] = " << l2[0] << ", l2[1] = " << l2[1] << endl;
 
     do  {
         // calculate bit position for flip
         bit = size_t(devgen() * 64.0F);
+	cout << "bit = " << bit << endl;
 
         if (bit > 31) // if flip in high-order word
             {
             // create mask
             mask   = 0xFFFFFFFFL << int(bit - 32L);
+	    cout << "bit > 31: mask = " << mask << endl;
 
             // duplicate low-order word of first parent
             lcross[0] = l1[0];
@@ -250,6 +271,7 @@ double Crossover
             {
             // create mask
             mask   = 0xFFFFFFFFL << int(bit);
+	    cout << "bit <= 31: mask = " << mask << endl;
 
             // crossover in low-order word
             lcross[0] = (l1[0] & mask) | (l2[0] & (~mask));
@@ -259,6 +281,8 @@ double Crossover
             }
         }
     while ((lcross[1] & DExpt) == DExpt);
+
+    cout << "lcross[0] = " << lcross[0] << ", lcross[1] = " << lcross[1] << endl;
 
     // copy and return
     memcpy(&fcross,lcross,sizeof(double));
