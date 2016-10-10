@@ -12,6 +12,7 @@
 //-----------------------------------------------------------
 
 #include <iostream>
+#include <cmath>
 #include "gafloat.h"
 #include "float.h"
 #include "randdev.h"
@@ -117,16 +118,18 @@ double FloatMutagen::Mutate
     const double & d
     )
     {
-	cout << "in FloatMutagen::Mutate" << endl;
+	//cout << "in FloatMutagen::Mutate" << endl;
     // mask for exponent bits
+	double dcopy = d;
     static const long DExpt = 0x7FF00000UL;
 
     long x[2], n, mask, bit;
 
     // choose section to mutate
     double mpick = devgen() * TotalW;
+    //double mpick = 0.05648113591638233 * TotalW;
     // double mpick = 37.0747;
-	cout << "mpick = " << mpick << endl;
+	//cout << "mpick = " << mpick << endl;
 
     // copy double to pair of longs for manipulation
     memcpy(x,&d,2 * sizeof(long));
@@ -152,6 +155,7 @@ double FloatMutagen::Mutate
                 n = x[1];
                 mask = 0x00100000L << int(devgen() * 11.0F);
                 //mask = 0x00100000L << int(94.0542 * 11.0F);
+		//mask = 1073741824;
 
                 if (n & mask)
                     n &= ~mask;
@@ -165,14 +169,14 @@ double FloatMutagen::Mutate
         else
             {
             bit = long(devgen() * 52.0F);
-		cout << "bit = " << bit << endl;
+		//cout << "bit = " << bit << endl;
             //bit = long(23.5392 * 52.0F);
 
             if (bit > 31L)
                 {
                 bit -= 32L;
                 mask = 1L << (int)bit;
-		cout << "mask = " << mask << ", x[1] = " << x[1] << endl;
+		//cout << "mask = " << mask << ", x[1] = " << x[1] << endl;
 
                 if (x[1] & mask)
                     x[1] &= ~mask;
@@ -183,7 +187,7 @@ double FloatMutagen::Mutate
                 {
                 // flip bit in mantissa
                 mask = 1L << (int)bit;
-		cout << "mask = " << mask << ", x[0] = " << x[0] << endl;
+		//cout << "mask = " << mask << ", x[0] = " << x[0] << endl;
 
                 if (x[0] & mask)
                     x[0] &= ~mask;
@@ -196,6 +200,8 @@ double FloatMutagen::Mutate
     // done
     double res;
     memcpy(&res,x,sizeof(double));
+	if (std::abs(res) < 1.0E-300)
+		cout << "Mutate:  res is too small - " << res << ", d was " << dcopy << endl;
     return res;
     }
 

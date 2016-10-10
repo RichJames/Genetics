@@ -74,110 +74,69 @@ class FloatMutagen:
 	def doubleMutate(self, d):
 		#mask for exponent bits
 		DExpt = 0x7ff00000
-		dcopy = d
 
 		bNegd = False
 		if d < 0.0:
 			bNegd = True
 
 		#choose section to mutate
-		#getUDevcopy = self._devgen.GetUDev()
-		#getUDevcopy = 0.05648113591638233     # test
-		#mpick = getUDevcopy * self._TotalW
 		mpick = self._devgen.GetUDev() * self._TotalW
-		#print('mpick = {0}'.format(mpick))
-		#mpickcopy = mpick
 			
 		#copy float to long for manipulation
 		temp = bin(cast(pointer(c_double(d)), POINTER(c_int64)).contents.value & 0xffffffffffffffff)
-		#mask1 = 0b1111111111111111111111111111111100000000000000000000000000000000
-		#mask2 = 0b0000000000000000000000000000000011111111111111111111111111111111
 
 		# ensure we have 64 bits; pad on the left with 0's.  Note:  66 includes '0b' part of the string.
 		intd = '0'*(66 - len(temp)) + temp[2:]
 
 		#x = [(abs(temp) & mask1) >> 32, abs(temp) & mask2]
 		x = [intd[:32], intd[32:]]
-
-		#x0copy = x[0]
-		#x1copy = x[1]
-		#x0flip = None
-		#mpickadj = None
-		#loopcount = 0
-		#ncopy = None
-		#maskexp = None
-		#x0Expcopy = None
-		#bitcopy = None
-		#x031copy = None
-		#x1mantcopy = None
 	
 		#mutate
 		if (mpick < self._SignW):
 			#flip sign
-			#mask = 0x80000000
-
-			#if x[0] & mask:
-			#	x[0] &= ~mask
-			#else:
-			#	x[0] |= mask
-			#x0flip = x[0]
 			bNegd ^= True
 		else:
 			mpick -= self._SignW
-			#mpickadj = mpick
 
 			if mpick < self._ExpW:
 				# mutate exponent while number is valid
 				while 1==1:
 					n = int(x[0], 2)
 					mask = (0x00100000 << int(self._devgen.GetUDev() * 11.0)) & 0xffffffff
-					#mask = 1073741824	# test
-					#maskexp = mask
 
 					if n & mask:
 						n &= ~mask
 					else:
 						n |= mask
 
-					#loopcount += 1
 					if (n & DExpt) != DExpt:
 						break	
 
 				x[0] = '0' * (32 - len(bin(n))) + bin(n)[2:]
-				#x0Expcopy = x[0]
 			else:
 				bit = int(self._devgen.GetUDev() * 52.0)
-				#print('bit = {0}'.format(bit))
-				#bitcopy = bit
 
 				if bit > 31:
 					bit -= 32
 					n = int(x[0], 2)
 					mask = (1 << bit) & 0xffffffff
-					#print('mask = {0}, x[0] = {1}'.format(mask, x[0]))
 
 					if n & mask:
 						n &= ~mask
 					else:
 						n |= mask
 					x[0] = '0' * (32 - len(bin(n))) + bin(n)[2:]
-					#x031copy = x[0]
 				else:
 					# flip bit in mantissa
 					n = int(x[1], 2)
 					mask = (1 << bit) & 0xffffffff
-					#print('mask = {0}, x[1] = {1}'.format(mask, x[1]))
 
 					if n & mask:
 						n &= ~mask
 					else:
 						n |= mask
 					x[1] = '0' * (32 - len(bin(n))) + bin(n)[2:]
-					#x1mantcopy = x[1]
 
-		#x[0] &= 0xffffffff
-		#x[1] &= 0xffffffff
-		#temp	= ((x[0] << 32) & 0xffffffff00000000) ^ x[1]
 		temp1 = int(x[0] + x[1], 2)
 		if bNegd:
 			temp1 *= -1
@@ -185,29 +144,6 @@ class FloatMutagen:
 		res	= cast(pointer(c_int64(temp1)), POINTER(c_double)).contents.value
 		if math.isnan(res):
 			res = d
-
-		#if abs(res) < 1.0e-300:
-			#print('doubleMutate:  res is too small - {0}, d was {1}'.format(res, dcopy))
-
-			#dcopy = d
-
-			#print('dcopy = {0}'.format(dcopy))
-			#print('bNegd = {0}'.format(bNegd))
-			#print('getUDevcopy = {0}'.format(getUDevcopy))
-			#print('mpickcopy = {0}'.format(mpickcopy))
-			#print('temp = {0}'.format(temp))
-			#print('x0copy = {0}'.format(x0copy))
-			#print('x1copy = {0}'.format(x1copy))
-			#print('x0flip = {0}'.format(x0flip))
-			#print('mpickadj = {0}'.format(mpickadj))
-			#print('loopcount = {0}'.format(loopcount))
-			#print('ncopy = {0}'.format(ncopy))
-			#print('maskexp = {0}'.format(maskexp))
-			#print('x0Expcopy = {0}'.format(x0Expcopy))
-			#print('bitcopy = {0}'.format(bitcopy))
-			#print('x031copy = {0}'.format(x031copy))
-			#print('x1mantcopy = {0}'.format(x1mantcopy))
-			#print('temp1 = {0}'.format(temp1))
 
 		return res
 
@@ -347,8 +283,8 @@ def SigDig(x, n):
 #	# round a number, x, to a specific number of digits, using n as a template
 #	return float(Decimal(x).quantize(Decimal(n)))
 
-d = 5.748206396142578
+#d = 5.748206396142578
 #fmute = FloatMutagen(2.0, 13.0, 85.0)
 #for i in range(100):
-#dMutant = fmute.doubleMutate(d)
-#	#print('dMutant = {0}'.format(dMutant))
+#	dMutant = fmute.doubleMutate(d)
+#	print('dMutant = {0}'.format(dMutant))

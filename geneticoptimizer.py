@@ -7,9 +7,9 @@ from roulette import RouletteWheel
 from decimal import *
 
 # initialize variables with default values
-POP_SZ			=  20
-GEN_SZ			=  6
-ReptFreq		=   1
+POP_SZ			=  50
+GEN_SZ			=  1001
+ReptFreq		=   10
 #SIG_DIG			= '.00000000'
 SIG_DIG			=  8
 XMin			= -10.0
@@ -32,11 +32,11 @@ MutateY			= True
 MuteLoop		= False
 Elitist			= True
 FitScale		= True
-EQ_ID			= 0
+EQ_ID			= 3	# 0=F6, 1=F7, 2=F8, 3=Custom
 FSA_EXPON		= 1
 FSA_WINDOW		= 2
 FSA_LINEAR		= 3
-Normalization		= 2
+Normalization		= 1
 
 # fitness algorithms
 def FitnessF6(x, y):
@@ -102,7 +102,7 @@ def TestPeakSearch():
 			elif EQ_ID == 2:
 				x[i][0] = 1.0 - FitnessF8(x[i][1], x[i][2])
 			else:
-				x[i][0] = 1.0 - FitnessCust(x[i][1], x[i][2])
+				x[i][0] = FitnessCust(x[i][1], x[i][2])
 
 			x[i][0] = SigDig(x[i][0], SIG_DIG)
 
